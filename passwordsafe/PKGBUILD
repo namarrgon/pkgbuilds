@@ -1,36 +1,42 @@
-# Maintainer: ME
+# Maintainer: Alexander Schnaidt <alex.schnaidt@gmail.com>
+
 _pkgname=pwsafe
 pkgname=passwordsafe
 _pkgver=0.93
-pkgver="$_pkgver"BETA
+pkgver=0.93BETA
 pkgrel=1
 pkgdesc="Simple & Secure Password Management"
 arch=('i686' 'x86_64')
-url="http://passwordsafe.sourceforge.net/index.shtml"
+url="http://sourceforge.net/projects/passwordsafe/"
 license=('Artistic2.0')
-#to build without yubikey support, remove ykpers and set NO_YUBI to "1" in build()
-depends=('libxtst' 'wxgtk2.8' 'xerces-c') #'ykpers')
+#to build without yubikey support, remove ykpers and uncomment NO_YUBI in build()
+depends=('libxtst' 'wxgtk2.8' 'xerces-c' 'ykpers')
 makedepends=('git' 'zip' 'libxt')
-optdeps=('xvkbd: virtual-keyboard support')
+optdepends=('xvkbd: virtual-keyboard support')
 conflicts=('passwordsafe-debian' 'passwordsafe-git' 'pwsafe')
 source=("http://downloads.sourceforge.net/project/$pkgname/Linux-BETA/$_pkgver/$_pkgname-$pkgver-src.tgz"
 	"http://downloads.sourceforge.net/project/$pkgname/Linux-BETA/$_pkgver/$_pkgname-$pkgver-src.tgz.sig"
-	"0001-1169-Don-t-buffer-dev-random-ifstream-so-as-not-to-b.patch")
+	"0001-1169-Don-t-buffer-dev-random-ifstream-so-as-not-to-b.patch"
+	"0001-Read-at-most-256-bit-from-dev-random.-Trying-to-read.patch")
 install='passwordsafe.install'
 md5sums=('bc65e60fb909ae67158896a3a13849b1'
          'SKIP'
-         '696cd55802734a3835a88ac0cda08a5d')
+         '696cd55802734a3835a88ac0cda08a5d'
+         '1d5bfc6aa36a830dc8169dc2998332ce')
 
 prepare() {
 	cd "$_pkgname-$pkgver"
-	#patch -Np1 -i "$srcdir"/0001-1169-Don-t-buffer-dev-random-ifstream-so-as-not-to-b.patch
+	
+	# fix #1169 Linux: Startup is slowed because of blocking /dev/random 
+	# 	http://sourceforge.net/p/passwordsafe/bugs/1169/
+	patch -Np1 -i "$srcdir"/0001-1169-Don-t-buffer-dev-random-ifstream-so-as-not-to-b.patch
+	patch -Np1 -i "$srcdir"/0001-Read-at-most-256-bit-from-dev-random.-Trying-to-read.patch
 }
 
 build() {
 	cd "$_pkgname-$pkgver"
-	export NO_YUBI=1
-	export WX_CONFIG="/usr/bin/wx-config-2.8"
-
+#	NO_YUBI=0 \
+	WX_CONFIG="/usr/bin/wx-config-2.8" \
 	make release help I18N
 }
 
@@ -55,9 +61,6 @@ package() {
 	install -d 755 "$pkgdir"/usr/share/pwsafe/xml
 	install -m 644 xml/* "$pkgdir"/usr/share/pwsafe/xml
 
-	#for lang in src/ui/wxWidgets/I18N/mos/*; do
-	#	install -Dm 644 "$lang"/LC_MESSAGES/pwsafe.mo "$pkgdir"/usr/share/locale/"$(basename "$lang")"/LC_MESSAGES/pwsafe.mo
-	#done
 	cd src/ui/wxWidgets/I18N/mos/
 	for lang in *; do
 		install -Dm 644 "$lang"/LC_MESSAGES/pwsafe.mo \
