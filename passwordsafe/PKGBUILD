@@ -35,7 +35,7 @@ prepare() {
 
 build() {
 	cd "$_pkgname-$pkgver"
-#	NO_YUBI=0 \
+#	NO_YUBI=1 \
 	WX_CONFIG="/usr/bin/wx-config-2.8" \
 	make release help I18N
 }
